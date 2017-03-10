@@ -1,20 +1,32 @@
 const http = require('http');
 const socketio = require('socket.io');
 const fs = require('fs');
+const htmlHandler = require('./htmlResponses.js');
+const draw = require('./drawerLogic.js');
+const choose = require('./chooserLogic.js');
 
 const PORT = process.env.PORT || process.env.NODE_PORT || 3000;
 // tell your server to listen on the port
 
 const handler = (req, res) => {
-  fs.readFile(`${__dirname}/../client/index.html`, (err, data) => {
-    // if err, throw it for now
-    if (err) {
-      throw err;
-    }
-
-    res.writeHead(200);
-    res.end(data);
-  });
+    console.log(request.url);
+  switch (request.url) {
+    case '/':
+      htmlHandler.getIndex(request, response);
+      break;
+    case '/drawer':
+       htmlHandler.getDrawer(request, response);
+      break;
+    case '/chooser':
+       htmlHandler.getChooser(request, response);
+      break;
+	case '/chooser':
+       htmlHandler.getViewer(request, response);
+      break;
+    default:
+      htmlHandler.getIndex(request, response);
+      break;
+  }
 };
 
 const app = http.createServer(handler);

@@ -1,11 +1,11 @@
 {
-  "name": "squaregame",
+  "name": "Drawing Game, Websocket Project",
   "version": "1.0.0",
   "engines": {
     "node": "7.1.0",
     "npm": "3.10.x"
   },
-  "description": "A simple application for updating object properties through websockets in realtime",
+  "description": "A Drawing application for 4 people where 3 people draw and one person chooses the winner",
   "main": "./src/app.js",
   "scripts": {
     "start": "node ./src/app.js",
