@@ -1,11 +1,11 @@
 {
-  "name": "Drawing Game, Websocket Project",
+  "name": "drawingapp",
   "version": "1.0.0",
   "engines": {
     "node": "7.1.0",
     "npm": "3.10.x"
   },
-  "description": "A Drawing application for 4 people where 3 people draw and one person chooses the winner",
+  "description": "A Drawing application for 5 people where 4 people draw and one person chooses the winner and then they swap",
   "main": "./src/app.js",
   "scripts": {
     "start": "node ./src/app.js",

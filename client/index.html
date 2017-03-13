@@ -30,154 +30,21 @@ button{
     <script src="/socket.io/socket.io.js"></script>
     <script>
         "use strict";
-		let usercolor;
-        let canvas;
-        let ctx;
-		let leftOffSet;
-		let topOffSet;
-        //our websocket connection
-        let socket; 
-		let drawNum;
-		let draws = {};
-		let counter;		
-		//generate rects
-		const setCalls = () =>
-	   {
-			counter = 3;
-			drawNum = 0;
-			var time = new Date().getTime();
-			draws[time] = {x:100, y:100, width: 20, height: 20};
-			var xCoord = Math.floor((Math.random() * 600) + 30);
-			var yCoord = Math.floor((Math.random() * 500) + 50);
-			time = new Date().getTime();
-			var basecolor = "red";
-			var coords = {x: xCoord, y:yCoord, width: 20, height: 20,color: basecolor };
-			socket.emit('draw', {time: time, coords: coords });
-			
-	   }
-	   
-	  //get user color 
-	    const getRandomColor = () => {
-		var letters = '0123456789ABCDEF'.split('');
-		var color = '#';
-		for (var i = 0; i < 6; i++ ) {
-			color += letters[Math.floor(Math.random() * 16)];
-		}
-		if(color == "FF0000"){
-		getRandomColor();
-		return;
-		}
-		return color;
-		}
-		//test points on click for collision
-		const isInside = (x,y,rx,ry,rwidth,rheight) =>{
-			return( x>=rx
-            && x<=rx+rwidth
-            && y>=ry
-            && y<=ry+rheight);
-		}				
-        
-        //redraw our square to the screen
-        const draw = () =>{
-            ctx.clearRect(0, 0,700,600);
-			var keys = Object.keys(draws);
-			canvas.addEventListener('click', (event) => {
-			var x = event.pageX - leftOffSet;
-			var	y = event.pageY - topOffSet;
-
-			// Collision detection between clicked offset and element.
-			for(var i=0; i < keys.length; i++)
-				{	
-				var clickCall = draws[keys[i]];
-					if(i == keys.length -1){
-						if(isInside(x,y,clickCall.x,clickCall.y,clickCall.width,clickCall.height)) {
-							console.log('click');
-							socket.emit('click',{key:keys[i],color:usercolor});
-							setCalls();
-						}	
-						else{
-						continue;
-						}
-					}	
-				}
-			});
-			//draw our updated square
-			for(var j= 0; j < keys.length; j++)
-			{
-				var drawCall = draws[keys[j]];
-				ctx.fillStyle = drawCall.color;
-				ctx.fillRect(drawCall.x, drawCall.y, drawCall.width, drawCall.height);
-			}
+		let socket;
 		
-        }
-		//show win info
-		const doWin = (data) =>{
-			document.getElementById("winName").style.color = data;
-			document.getElementById("winner").style.display = "block";
-			document.getElementById("restartmsg").style.display = "block";		
-			document.getElementById("restart").style.display = "block";				
-		}
-		
-		
-        //when a message is received from the server
-        //update our square to match the server's response
-		//handle draw calls
-        const handleMessage = (data) => {
-			
-            draws = data;
-			draw();
-        }
-		//update user score, checl for win conditions
-		const updateScore = (data) => {
-            myScore.innerText = data.score;
-			totalScore.innerText = data.total;
-			checkScore(data.score);
-        }
-		//check for winning score
-		const checkScore = (score) =>{
-			if(score == 15){
-			socket.emit('win',usercolor);
-			}
-			else{
-			return;
-			}
-		}
-		//reset variables and hide win info
-		const reset = () => {
-			document.getElementById("winner").style.display = "none";
-			document.getElementById("restartmsg").style.display = "none";
-			document.getElementById("restart").style.display = "none";
-			draws = {};
-			socket.emit('reset');
-			myScore.innerText = 0;
-		}
-		//reset user score entries
-		const doReset = () =>{
-		socket.emit('score',{name: usercolor, score: 0});
-		myScore.innerText = 0;
-		document.getElementById("winner").style.display = "none";
-		document.getElementById("restartmsg").style.display = "none";
-		document.getElementById("restart").style.display = "none";
-		draws = {};
-		}
+		//This will be the landing page that you use to join into a lobby based off a code given to the starter
+		//not in use now, automatically fills
 		
 		//initialize
         const init = () => {
-            canvas = document.querySelector("#canvas");
-            ctx = canvas.getContext("2d");
-			leftOffSet = canvas.offsetLeft;
-			topOffSet = canvas.offsetTop;
+
 			
             //Connect to our server
             socket = io.connect();
             
             //When the socket connects successfully
             socket.on('connect', () => {
-				usercolor = getRandomColor();
-				document.getElementById("myColor").style.color = usercolor;
-				//var socketid = socket;
-				socket.emit('check');
-				socket.emit('score',{name:usercolor,score: 0});
+				
                 //setCalls();
             });      
 			
