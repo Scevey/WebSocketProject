@@ -278,7 +278,7 @@
         interval;
 
     interval = setInterval(function() {
-        countdownElement.data = 'Draw! ' + (seconds - second) + ' seconds left';
+        countdownElement.innerHTML = 'Draw! ' + (seconds - second) + ' seconds left';
         if (second >= seconds) {
             clearInterval(interval);
 			socket.emit('timesUP');
@@ -352,7 +352,7 @@
     	</label>
     	
     	<span><input id="clearButton" type="button" value="Clear"/></span>
-		<span><p id="countdown">10</p></span>
+		<span><p id="countdown">Timer has not begun</p></span>
     </div>
 	<div style="width: 29%; height: 100%; margin-left: 910px">
 	<div style="padding: 5px; background: red; height: 100px;" id="subject">
