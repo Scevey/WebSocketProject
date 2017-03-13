@@ -278,7 +278,7 @@
         interval;
 
     interval = setInterval(function() {
-        countdownElement.firstChild.data = 'Draw! ' + (seconds - second) + ' seconds left';
+        countdownElement.data = 'Draw! ' + (seconds - second) + ' seconds left';
         if (second >= seconds) {
             clearInterval(interval);
 			socket.emit('timesUP');
