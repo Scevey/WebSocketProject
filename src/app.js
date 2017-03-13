@@ -58,7 +58,10 @@ io.on('connection', (socket) => {
   socket.on('snapshot', (data) => {
     roomImgData[playercount] = roomImgData;
     playercount++;
-    io.sockets.in('room1').emit('addChoices');
+    if(playercount == 4){
+         io.sockets.in('room1').emit('addChoices', roomImgData);
+    }
+
   });
 
 
