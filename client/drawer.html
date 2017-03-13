@@ -81,7 +81,6 @@
 		document.querySelector('#lineWidthChooser').onchange = doLineWidthChange;				
 		document.querySelector('#fillStyleChooser').onchange = doStrokeStyleChange;
 		document.querySelector('#clearButton').onclick = doClear;
-		document.querySelector('#exportButton').onclick = doExport;
 		document.querySelector('#toolChooser').onchange = function(e)
 		{
 			currentTool = e.target.value;
@@ -284,7 +283,7 @@
             clearInterval(interval);
 			socket.emit('timesUP');
         }
-
+		console.log(second);
         second++;
     }, 1000);
 	}
@@ -353,7 +352,6 @@
     	</label>
     	
     	<span><input id="clearButton" type="button" value="Clear"/></span>
-    	<span><input id="exportButton" type="button" value="Export"/></span>
     </div>
 	<div style="width: 29%; height: 100%; margin-left: 910px">
 	<div style="padding: 5px; background: red; height: 100px;" id="subject">
