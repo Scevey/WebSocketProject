@@ -43,7 +43,6 @@
      <script src="/socket.io/socket.io.js"></script>
 	<script>
 	"use strict";
-	window.onload = init;
 	
 	// GLOBALS
 	let canvas,ctx,dragging=false,lineWidth,strokeStyle,currentTool,fillStyle,origin,topCanvas,topCtx;
@@ -106,8 +105,6 @@
 				fillStyle = e.target.value;
 				}
 			}
-						leftOffSet = canvas.offsetLeft;
-			topOffSet = canvas.offsetTop;
 			
             //Connect to our server
             socket = io.connect();
@@ -291,7 +288,8 @@
         second++;
     }, 1000);
 	}
-	
+		window.onload = init;
+
 	</script>
 </head>
 <body>
