@@ -246,6 +246,35 @@
 		mouse.y = e.pageY - e.target.offsetTop;
 		return mouse;
 	}
+		const drawGrid =(ctx, color, cellWidth, cellHeight)=>{
+		// save the current drawing state as it existed before this function was called
+		ctx.save()
+		
+		// set some drawing state variables
+		ctx.strokeStyle = color;
+		ctx.fillStyle = '#ffffff';
+		ctx.lineWidth = 0.5;
+		ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+		
+		// vertical lines all set!
+		for (var x = cellWidth + ctx.lineWidth; x < ctx.canvas.width; x += cellWidth) {
+			ctx.beginPath();
+			ctx.moveTo(x, 0);
+			ctx.lineTo(x, ctx.canvas.height);
+			ctx.stroke();
+		}
+		
+		for (var y = cellHeight + ctx.lineWidth; y < ctx.canvas.height; y += cellHeight) {
+			ctx.beginPath();
+			ctx.moveTo(0,y);
+			ctx.lineTo(ctx.canvas.width, y);
+			ctx.stroke();
+		}
+		
+		
+		// restore the drawing state
+		ctx.restore();
+	}
 	
 	const countDown = () => {
 	    var countdownElement = document.getElementById('countdown'),
