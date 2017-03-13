@@ -32,6 +32,7 @@ app.listen(PORT);
 
 const roomImgData = {};
 let usercount = 0;
+let playercount = 0;
 const room = 'room';
 const mod = 1;
 
@@ -55,7 +56,8 @@ io.on('connection', (socket) => {
   });
 
   socket.on('snapshot', (data) => {
-    roomImgData[data.playerNum] = roomImgData;
+    roomImgData[playercount] = roomImgData;
+    playercount++;
     io.sockets.in('room1').emit('addChoices');
   });
 
