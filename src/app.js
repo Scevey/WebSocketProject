@@ -2,18 +2,16 @@ const http = require('http');
 const socketio = require('socket.io');
 const fs = require('fs');
 const xxh = require('xxhashjs');
-const htmlHandler = require('./htmlresponses.js');
-// const draw = require('./drawerLogic.js');
-// const choose = require('./chooserLogic.js');
 
 const PORT = process.env.PORT || process.env.NODE_PORT || 3000;
+const index = fs.readFileSync(`${__dirname}/../client/index.html`);
 const backgroundImage = fs.readFileSync(`${__dirname}/../client/abstractcolor.png`);
 
 const handler = (request, response) => {
   console.log(request.url);
   switch (request.url) {
     case '/':
-      htmlHandler.getIndex(request, response);
+      getIndex(request, response);
       break;
     case '/abstract.png':
       response.writeHead(200, { 'Content-Type': 'image/png' });
@@ -25,6 +23,11 @@ const handler = (request, response) => {
   }
 };
 
+const getIndex = (request, response) => {
+  response.writeHead(200, { 'Content-Type': 'text/html' });
+  response.write(index);
+  response.end();
+};
 const app = http.createServer(handler);
 const io = socketio(app);
 app.listen(PORT);
