@@ -2,73 +2,777 @@
 <html lang="en">
 <head>
 	<style>
-#wrap { 
+.wrap { 
 	width: 900px; 
+	margin: 0 auto; 
+	margin-top: 1%;
+	padding-top: 1%;
+	padding-bottom: 1%;
+	background-color: #ededed;
+}
+#p0,#p1,#p2,#p3{
+	max-width: 400px;
+	max-height:390px;
+}
+#player0,#player1,#player2,#player3{
+	background: #ededed;
+	border: 2px solid;
+}
+.smallerwrap { 
+	width: 500px; 
 	margin: 0 auto; 
 	margin-top: 3%;
 	padding-top: 2%;
-	padding-bottom: 2%;
-	text-align: center;
+	padding-bottom: 1%;
 	background-color: #ededed;
 }
-
 body{
-	background-color: #ADD8E6;
+	
+	<!---background-color: #ADD8E6; --> 
+	font-family: tahoma, verdana, sans serif;
 }
 canvas{
 	background-color: rgb(255,255,255);
 }
-p{ 	width: 50%;
-	margin-left: 25%;
+#mainCanvas {
+	background: #ffffff;
+	position:absolute;
+	z-index: 0;
+	left: 10px;
+	top: 10px;
+	box-shadow: 4px 4px 8px rgba(0,0,0,0.5);
+}
+#controls {
+	position: absolute;
+	z-index: 2;
+	left: 25px;
+	top: 25px;
 	}
-button{
-	width: 10%;
-	margin-left: 45%;
-	margin-bottom 2%;
+#topCanvas{
+		background: rgba(0,0,0,0);
+		position: absolute;
+		left: 10px;
+		top: 10px;
+		z-index: 1;
+		cursor: pointer;
+	}
+label{
+	font-size: 12px;
+	margin-right:0.75em;
+}
+.title{
+	text-align:center
+}
+.parent {
+	line-height: 2;
+	width: 50%;
+}
+.parent > ul {
+  display: inline-block;
+}
+.lobbyButton{
+    cursor: pointer;
+    cursor: hand; 
+    height: 50px;
+    border-radius: 5px;
+    width: 150px;
+    border-color: rosybrown;
+    color: white;
+    font-weight: 900;
+	border: 3px solid;
+}
+#startButton{
+    cursor: pointer;
+    cursor: hand; 
+    height: 50px;
+    border-radius: 5px;
+    width: 150px;
+    color: white;
+    font-weight: 900;
+	border: 3px solid;
+	background: lightgreen;
+	margin-left: 40%;   
+	border-color: rosybrown;
+
+}
+#countdown{
+	display:inline;
+	margin-left: 20px;
+}
+.choiceButton{
+    cursor: pointer;
+    cursor: hand; 
+    height: 50px;
+    border-radius: 5px;
+    width: 100px;
+    border-color: rosybrown;
+    color: black;
+    font-weight: 500;
+	background: lightyellow;
+	border: 3px solid;
+	border-color: brown;
+	margin:10px;
+}
+#createLobby{
+	margin-left: 13%;
+	 background: lightgreen;
+}
+#joinLobby{
+	margin-left: 190px;
+	 background: crimson;
+}
+#form{
+    float: right;
+    margin-right: 100px;
+}
+#subject,#feed, #chat{
+	border: 3px solid;
+	border-color: brown;
+	background-color: #ededed;
+}
+#subject,#feed{
+	border-bottom:0px;
+}
+#player1{
+	border-color: red;
+}
+#player2{
+	border-color: blue;
+}
+#player3{
+	border-color: yellow;
+}
+#player4{
+	border-color: green;
+	margin-left: 20px;
+}
+.chooserBox{
+	padding:3px;
+	margin: 9px;
+}
+#index{
+	border: 3px solid black;
+}
+#wordbox{
+	display: block;
+	z-index: 50;
+	position: absolute;
+	bottom: 50%;
+	left: 37%;
+	padding: 20px;
+	border: 3px solid;
+	border-color: brown;
+}
+.playerBox{
+	padding:3px;
+	margin: 9px;
+	margin: 5px 50px;
+	border: 2px solid black;
+	border-radius: 10px;
 }
 	</style>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
-    <script>
+    <script type="text/babel">
         "use strict";
+		let canvas,ctx,dragging=false,lineWidth,strokeStyle,currentTool,fillStyle,origin,topCanvas,topCtx;
 		let socket;
-		
-		//This will be the landing page that you use to join into a lobby based off a code given to the starter
-		//not in use now, automatically fills
-		
+		let imgArr;
+		let playernumber;
+		let numPlayers;
+		let chosen;
+		let roomCode;
+		// CONSTANTS
+		let DEFAULT_LINE_WIDTH = 3;
+		const DEFAULT_STROKE_STYLE = "red";
+		const DEFAULT_FILL_STYLE = "blue";
+		let TOOL_PENCIL ="toolPencil";
+		let TOOL_RECTANGLE = "toolRectangle";
+		let TOOL_LINE = "toolLine";
+	
 		//initialize
-        const init = () => {
-
-			
+		const init = () => {
+			document.querySelector('#joinLobby').onclick = join;
+			document.querySelector('#createLobby').onclick = create;
+			document.querySelector('#startButton').onclick = gameStart; 
+			document.querySelector('#choice0').onclick = choice; 
+			document.querySelector('#choice1').onclick = choice;
+			document.querySelector('#choice2').onclick = choice; 
+			document.querySelector('#choice3').onclick = choice; 
             //Connect to our server
             socket = io.connect();
-            
             //When the socket connects successfully
             socket.on('connect', () => {
 				
-                //setCalls();
             });      
 			
-			//handle server response
-            socket.on('start',setCalls);
-            socket.on('draw', handleMessage);
-			socket.on('updateScore',updateScore);
-			socket.on('win',doWin);
-			socket.on('scorereset',doReset);
+			socket.on('getRole', getRole);
+			socket.on('role', getGameReady);
+			socket.on('showwords', showWords);
+			socket.on('word', countDown);
+			socket.on('lobby', readyUp);
+			socket.on('joined', playerJoin);
+			socket.on('gameStart', gameStart);
+            socket.on('drawend', snapshot);
+			socket.on('scorereset',doClear);
+			socket.on('scoreupdate',scoreUpdate);
+			socket.on('showStart',showStart);
+			//chooser responses
+            socket.on('addChoice',addChoice);
+			socket.on('reset',doReset);
         }
+		const drawInit = () =>{
+			canvas = document.querySelector('#mainCanvas');
+			ctx = canvas.getContext('2d');
+			topCanvas = document.querySelector('#topCanvas');
+			topCtx = topCanvas.getContext('2d');
+			topCtx.lineWidth = ctx.lineWidth = lineWidth;
+			topCtx.strokeStyle = ctx.strokeStyle = strokeStyle;
+			topCtx.fillStyle = ctx.fillStyle = fillStyle;
+			topCtx.lineCap = ctx.lineCap = "round";
+			topCtx.lineJoin = ctx.lineJoin = "round";
+			fillStyle = DEFAULT_FILL_STYLE;
+			currentTool = TOOL_PENCIL;
+			origin = {};
+			
+			//drawGrid(ctx,'lightgray',5,5);
+			
+			topCanvas.onmousedown = doMousedown;
+			topCanvas.onmousemove = doMousemove;
+			topCanvas.onmouseup = doMouseup;
+			topCanvas.onmouseout = doMouseout;
 
+			document.querySelector('#lineWidthChooser').onchange = doLineWidthChange;				
+			document.querySelector('#fillStyleChooser').onchange = doFillStyleChange;
+			document.querySelector('#strokeStyleChooser').onchange = doStrokeStyleChange;
+			document.querySelector('#clearButton').onclick = doClear;
+
+			document.querySelector('#toolChooser').onchange = function(e)
+			{
+				currentTool = e.target.value;
+			}
+			document.querySelector('#fillStyleChooser').onchange = function(e)
+				{
+					if(e.target.value == "gradient"){
+					var grad = ctx.createLinearGradient(10, 0, 700, 0);
+					grad.addColorStop(0, 'red');
+					grad.addColorStop(1 / 6, 'orange');
+					grad.addColorStop(2 / 6, 'yellow');
+					grad.addColorStop(3 / 6, 'green')
+					grad.addColorStop(4 / 6, 'aqua');
+					grad.addColorStop(5 / 6, 'blue');
+					grad.addColorStop(1, 'purple');
+					fillStyle = grad;
+					
+					}
+					else{
+					fillStyle = e.target.value;
+					}
+				}
+	  }
+
+				
+		
+		// EVENT CALLBACK FUNCTIONS
+		const doMousedown = (e) =>{
+			dragging= true;
+			
+			var mouse = getMouse(e);
+			switch(currentTool){
+			case TOOL_PENCIL:
+				ctx.beginPath();
+				ctx.moveTo(mouse.x,mouse.y);
+				break;
+				
+			case TOOL_RECTANGLE:
+			case TOOL_LINE:
+				origin.x = mouse.x;
+				origin.y = mouse.y;
+				break;
+			}
+		}
+	 
+		const doMousemove = (e) => {
+			if(! dragging) return;
+			
+			var mouse = getMouse(e)
+			
+			switch(currentTool){
+			case TOOL_PENCIL:
+				ctx.strokeStyle = strokeStyle;
+				ctx.lineWidth = lineWidth;
+				ctx.lineTo(mouse.x,mouse.y);
+				ctx.stroke();
+				break;
+			case TOOL_RECTANGLE:
+				let x = Math.min(mouse.x,origin.x);
+				let y = Math.min(mouse.y, origin.y);
+				let w = Math.abs(mouse.x - origin.x);
+				let h = Math.abs(mouse.y - origin.y);
+				
+				topCtx.strokeStyle = strokeStyle;
+				topCtx.fillStyle = fillStyle;
+				topCtx.lineWidth = lineWidth;
+				
+				clearTopCanvas();
+				topCtx.fillRect(x,y,w,h);
+				topCtx.strokeRect(x,y,w,h);
+				break;
+				
+			case TOOL_LINE:
+				topCtx.strokeStyle = strokeStyle;
+				topCtx.lineWidth = lineWidth;
+				clearTopCanvas();
+				topCtx.beginPath();
+				topCtx.moveTo(origin.x,origin.y);
+				topCtx.lineTo(mouse.x,mouse.y);
+				topCtx.stroke();
+				break;
+			}
+		}
+		
+		const doMouseup = (e) =>{
+			switch(currentTool){
+				case TOOL_PENCIL:
+					ctx.closePath();
+					var data = canvas.toDataURL("image/png"); 
+					socket.emit('snapshot', {imgData: data, room: roomCode, num: playernumber});
+					break;
+				case TOOL_RECTANGLE:
+				case TOOL_LINE:
+					if(dragging){
+						ctx.drawImage(topCanvas,0,0);
+						clearTopCanvas();
+						var data = canvas.toDataURL("image/png"); 
+						socket.emit('snapshot', {imgData: data, room: roomCode, num: playernumber});
+					}
+					break;
+			}
+			dragging = false;
+		}
+		const clearTopCanvas = () =>{
+			topCtx.clearRect(0,0,topCtx.canvas.width,topCtx.canvas.height);
+		}
+		
+		// if the user drags out of the canvas
+		const doMouseout = (e) =>{
+			switch(currentTool){
+				case TOOL_PENCIL:
+				ctx.closePath();
+					break;
+				case TOOL_RECTANGLE:
+				case TOOL_LINE:
+					clearTopCanvas();
+					break;
+			}
+			dragging = false;
+		}
+		
+		const doClear = () =>{
+		if(ctx){
+				ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+			}
+		}
+		const doLineWidthChange = (e) =>{
+			lineWidth = e.target.value;
+		}
+		const doStrokeStyleChange = (e) =>{
+			strokeStyle = e.target.value;
+		}
+		const doFillStyleChange = (e) => {
+			fillStyle = e.target.value;
+		}
+		
+		const snapshot = () =>{
+
+			var data = canvas.toDataURL("image/png"); 
+			socket.emit('snapshot', {imgData: data, room: roomCode, num: playernumber});
+		 }
+		
+		const getMouse = (e) =>{
+			var mouse = {}
+			mouse.x = e.pageX - e.target.offsetLeft;
+			mouse.y = e.pageY - e.target.offsetTop;
+			return mouse;
+		}
+		const drawGrid =(ctx, color, cellWidth, cellHeight)=>{
+			// save the current drawing state as it existed before this function was called
+			ctx.save();
+			
+			// set some drawing state variables
+			ctx.strokeStyle = color;
+			ctx.fillStyle = '#ffffff';
+			ctx.lineWidth = 0.5;
+			ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+			
+			// vertical lines all set!
+			for (var x = cellWidth + ctx.lineWidth; x < ctx.canvas.width; x += cellWidth) {
+				ctx.beginPath();
+				ctx.moveTo(x, 0);
+				ctx.lineTo(x, ctx.canvas.height);
+				ctx.stroke();
+			}
+			
+			for (var y = cellHeight + ctx.lineWidth; y < ctx.canvas.height; y += cellHeight) {
+				ctx.beginPath();
+				ctx.moveTo(0,y);
+				ctx.lineTo(ctx.canvas.width, y);
+				ctx.stroke();
+			}
+			
+			// restore the drawing state
+			ctx.restore();
+		}
+		
+		const countDown = (data) => {
+		if(ctx){
+				document.getElementById('topic').textContent = data;
+				doClear();
+				var countdownElement = document.getElementById('timeleft'),
+				seconds = 5,
+				second = 0,
+				interval;
+
+			interval = setInterval(function() {
+				countdownElement.innerHTML = (seconds - second) + ' Draw!';
+				if (second >= seconds) {
+					clearInterval(interval);
+					document.getElementById('timeleft').innerHTML = "Times Up!";
+					socket.emit('timesUP');
+				}
+				second++;
+			}, 1000);
+		}
+		}
+
+		const addChoice =(data) =>{
+			var pic = data.imgData;
+			var num = data.num;
+			var id = 'p'+num;
+			let playerString = "player";
+			var playerID = playerString+num;
+			var image_x = document.getElementById(id);
+			if(image_x){
+				image_x.parentNode.removeChild(image_x);
+			}
+
+			var image = new Image();
+			image.id = id;
+			image.src = pic;
+			document.getElementById(playerID).appendChild(image);
+			document.getElementById(id).style.maxWidth = "400px";
+			document.getElementById(id).style.maxHeight = "390px";
+			var select = '#'+id;
+			document.querySelector(select).onclick = chooseWinner; 
+		}
+		const doReset = (data) =>{
+			document.getElementById('topic').textContent = 'Critic is choosing...';
+			doClear();
+			document.getElementById('choice0').innerHTML = 'Choice 1';
+			document.getElementById('choice1').innerHTML = 'Choice 2';
+			document.getElementById('choice2').innerHTML = 'Choice 3';
+			document.getElementById('choice3').innerHTML= 'Choice 4';
+			if(playernumber == data){
+				gameStart();
+			}
+			
+		}
+		const chooseWinner = () =>{
+			socket.emit('roundwin',{num: playernumber, room: roomCode});
+		}
+		const readyUp = (data) =>{
+			document.getElementById('roomCode').textContent=data.room;
+			roomCode = data.room;
+			playernumber = data.length-1;
+			numPlayers = data.length;
+			
+			for(var i = 0; i < numPlayers; i++){
+				var temp = i.toString();
+				var playerID = 'player'+temp+'Status';
+				document.getElementById(playerID).textContent = "In Lobby";
+			}
+			document.getElementById('lobby').style.display = 'block';
+			document.getElementById('index').style.display = 'none';
+			if(numPlayers == 4){
+				//call function to send calls to determine player roles
+				socket.emit('setup',{room: roomCode});
+			}
+		}
+		const playerJoin = (data)=>{
+			var temp = (numPlayers).toString();
+			var playerID = 'player'+temp+'Status';
+			document.getElementById(playerID).textContent = "In Lobby";
+			numPlayers++;
+
+		}
+		const join = ()=>{
+			var roomname = document.getElementById('lobbyName').value;
+			if(roomname === ""){
+			return;
+			}
+			var data = {
+				room: roomname
+			};
+			socket.emit('join', data);
+		}
+		const create = ()=>{
+			socket.emit('create');
+		}
+		const showStart = ()=>{
+			document.getElementById('startButton').style.display = 'block';
+			document.getElementById('status').textContent = "Room Full!";
+		}
+		const gameStart = (e)=>{
+			var chooserspot = Math.floor(Math.random() * numPlayers);
+			var data = {
+				spot: chooserspot,
+				room: roomCode
+			}
+			socket.emit('gameStart', data);
+		}
+		const getRole = ()=>{
+			var data={
+				num: playernumber,
+				room: roomCode
+			}
+			socket.emit('getrole', data);
+		}
+		const getGameReady = (data)=>{
+			if(data.role == 'chooser'){
+			var wordspots = [];
+			numPlayers = data.num;
+
+			for(var i = 0; i < 4; i++){
+				var chooserspot = Math.floor(Math.random() * 588);
+				wordspots[i] = chooserspot;
+			}
+				socket.emit('words', wordspots);
+				document.getElementById('chooser').style.display = 'block';
+				document.getElementById('lobby').style.display = 'none';
+				document.getElementById('drawer').style.display = 'none';
+			}
+			else if(data.role == 'drawer'){
+				drawInit();
+				document.getElementById('chooser').style.display = 'none';
+				document.getElementById('drawer').style.display = 'block';
+				document.getElementById('lobby').style.display = 'none';
+			}
+			else{
+				drawInit();
+				document.getElementById('chooser').style.display = 'none';
+				document.getElementById('drawer').style.display = 'block';
+				document.getElementById('lobby').style.display = 'none';
+			}
+		}
+		const showWords = (data)=>{
+			var choices = data;
+			document.getElementById('choice0').innerHTML = choices.word0;
+			document.getElementById('choice1').innerHTML = choices.word1;
+			document.getElementById('choice2').innerHTML = choices.word2;
+			document.getElementById('choice3').innerHTML= choices.word3;
+			document.getElementById('wordbox').style.display = 'block';
+		}
+		const choice = (e)=>{
+			chosen = e.target.innerHTML;
+			var data={
+				chosen: chosen,
+				room: roomCode
+			}
+			document.getElementById('wordbox').style.display = 'none';
+			socket.emit('chosen',data);
+		}
+		const scoreUpdate = (data)=>{
+			var player ="player"+data+'Score';
+			var score = document.getElementById(player).textContent;
+			var newscore = parseInt(score);
+			newscore++;
+			document.getElementById(player).textContent = newscore;
+			if(newscore == 3){
+				showWin(data);
+			}
+			else{
+				socket.emit('roundreset', data);
+			}
+			
+		}
+		const showWin = (data)=>{
+			var num = data + 1;
+			var player ="Player "+num;
+			document.getElementById('winmessage').innerHTML = player + " Wins!";
+			document.getElementById('chooser').style.display = 'none';
+			document.getElementById('drawer').style.display = 'none';
+			document.getElementById('win').style.display = 'block';
+		}
+		
+		
       window.onload = init;
     </script>
 </head>
-<body>
-<div id = "wrap">
-	<h2>Your Score: <span id="myScore">0</span> Out of : <span id='totalScore'>0</span></h2>
-	<h2 id="myColor">This is your color </h2>
-	<h1 style= "display: none;"id='winner'>Color: <span id="winName">Player Color</span> Won!</h1>
-	<p style= "display: none;"id='restartmsg'>Click the button to restart</p>
-	<button style = "display:none;"id= 'restart' onclick="reset()">Click me</button>	
-    <canvas  id="canvas" height="600" width="700">Please use an HTML 5 browser</canvas>
-	<h2> How to Play: </h2>
-	<p>First person to click the red square gets a point, the square will change colors to represent who tagged it. Your player color and current score can be seen above the game area. First to 15 wins the round</p>
+<body background="abstract.png">
+<div id="drawer" style="display: none">
+	<div>
+	<div>
+	<canvas id="mainCanvas" width="900" height="700">
+	Get a real browser!
+	</canvas>
+	<canvas id="topCanvas" width="900" height="700">
+	Get a real browser!
+	</canvas>
+	</div>
+	<div id="controls">
+		<label>Tool:
+			<select id="toolChooser">
+				<option value="toolPencil">Pencil</option>
+				<option value="toolRectangle">Rectangle</option>
+				<option value="toolLine">Line</option>
+    		</select>
+    	</label>
+    	
+    	<label>Line Width: 
+			<select id="lineWidthChooser">
+				<option value="1">1</option>
+				<option value="2">2</option>
+        		<option value="3" selected>3</option>
+        		<option value="4">4</option>
+				<option value="5">5</option>
+        		<option value="6">6</option>
+        		<option value="7">7</option>
+				<option value="8">8</option>
+        		<option value="9">9</option>
+        		<option value="10">10</option>
+    		</select>
+    	</label>
+    	    	<label>Stroke Color: 
+			<select id="strokeStyleChooser">
+				<option value="Black" selected>Black</option>
+				<option value="Blue">Blue</option>
+        		<option value="Red">Red</option>
+        		<option value="Yellow">Yellow</option>
+				<option value="Green">Green</option>
+        		<option value="Orange">Orange</option>
+        		<option value="Purple">Purple</option>
+				<option value="White">White</option>
+        		<option value="Silver">Silver</option>
+        		<option value="Brown">Brown</option>
+    		</select>
+    	</label>
+		     	<label>Fill Color: 
+			<select id="fillStyleChooser">
+				<option value="Black">Black</option>
+				<option value="Blue"selected>Blue</option>
+        		<option value="Red">Red</option>
+        		<option value="Yellow">Yellow</option>
+				<option value="Green">Green</option>
+        		<option value="Orange">Orange</option>
+        		<option value="Purple">Purple</option>
+				<option value="White">White</option>
+        		<option value="gradient">gradient</option>
+        		<option value="Brown">Brown</option>
+    		</select>
+    	</label>
+    	<span><input id="clearButton" type="button" value="Clear"/></span>
+		<p id="countdown">Time Left: <span id="timeleft">Timer has not begun</span></p>
+    </div>
+		<div style="width: 20%; height: 100%; margin-left: 910px">
+			<div style="padding: 5px;height: 100px;" id="subject">
+				<h2>The topic to draw:</h2>
+				<p><span id="topic">Critic is choosing...</span></p>
+			</div>
+			<div style="padding: 5px; height:375px;" id="feed">
+				<h2>The Score Board</h2>
+				<h4>Player 1 </h4>
+				<p>Score: <span id="player0Score">0</span></p>
+				<h4>Player 2 </h4>
+				<p>Score: <span id="player1Score">0</span></p>
+				<h4>Player 3 </h4>
+				<p>Score: <span id="player2Score">0</span></p>
+				<h4>Player 4 </h4>
+				<p>Score: <span id="player3Score">0</span></p>
+
+			</div>
+			<div id="chat" style="height:200px; display: none;">
+					<h4>Stretch Goal.. Chat? </h4>
+			</div>
+		</div>
+		</div>
+	</div>
+<div id="lobby" style="display: none" class="wrap">
+	<h2 style="margin-top: 0px" class="title">Game Lobby (<span id="status">Waiting...</span>)</h2>
+	<h2 style="margin-top: 0px" class="title">Room Code (<span id="roomCode">Waiting...</span>)</h2>
+	<div style="padding:20px; padding-top: 10px;">
+		<div class="playerBox" style="background: lightgreen">
+			<div id="player0box">
+				<h2 class="title"> Player 1 <h2>
+				<p class="title">Status: <span id="player0Status">Waiting...</span></p>
+			</div>
+		</div>
+		<div class="playerBox"style="background: lightyellow">
+			<div id="player1box">
+				<h2 class="title"> Player 2 <h2>
+				<p class="title">Status: <span id="player1Status">Waiting...</span></p>
+			</div>
+		</div>
+		<div class="playerBox"style="background: lightsalmon" >
+			<div id="player2box">
+				<h2 class="title"> Player 3 <h2>
+				<p class="title">Status: <span id="player2Status">Waiting...</span></p>
+			</div>
+		</div>
+		<div class="playerBox" style="background: lightsteelblue">
+			<div id="player3box">
+				<h2 class="title"> Player 4 <h2>
+				<p class="title">Status: <span id="player3Status">Waiting...</span></p>
+			</div>
+		</div>
+		<button style="display:none;" id="startButton" onclick="gameStart()">Start Game</button>
+	</div>
 </div>
-	</body>
+<div id="chooser" style="display: none"  class="wrap">
+	<h2 style="margin-top: 0px" class="title">You are this rounds Critic, Click your favorite drawing!</h2>
+	<div style="padding:20px; padding-top: 10px;">
+	<div style="float: right; height: 390px; margin-right:20px; width: 400px; background: white; margin" id="player0"></div>
+	<div style="height: 390px; width: 400px; margin-left:20px; background: white;" id="player1"></div>
+	<div style="float: right; height: 390px; margin-right:20px; width: 400px; background: white;" id="player2"></div>
+	<div style="height: 390px; width: 400px; margin-left:20px; background: white;"  id="player3"></div>
+	<div id="wordbox" height="400" width="400" style="background-color: white; display: none;">
+		<h2 class="title">Choose the Artists Topic</h2>
+		<h4 class="title">Then watch them draw for you!</h4>
+		<button class="choiceButton"id='choice0' onclick="choice()">Choice 1</button>
+		<button class="choiceButton"id='choice1' onclick="choice()">Choice 2</button>
+		<button class="choiceButton"id='choice2' onclick="choice()">Choice 3</button>
+		<button class="choiceButton"id='choice3' onclick="choice()">Choice 4</button>
+	</div>
+	</div>
+</div>
+<div id="index" class="wrap">
+	<h1 class="title">Doodling With Pals</h1>
+	<h2 class="title">"The best drawing game that isnt Drawesome" - Big Time CEO</h2>
+	<button class="lobbyButton"id= 'createLobby'>Create New Lobby</button>
+	<button class="lobbyButton"id= 'joinLobby' >Join a Lobby</button>
+	<form id="form">
+	Lobby Name:<br>
+	<input id="lobbyName" type="text" name="lobbyName">
+	</form>
+	<div height="600" width="400" style="background-color: white">
+	</div>
+	<div class="parent" style="float:right">
+		<ul>
+		<li>The Critic selects the rounds topic and Winner</li>
+		<li>Artists use their artistic vision to draw a masterpiece</li>
+		<li>Each round someone new is the Critic</li>
+		</ul>
+	</div>
+	<div class="parent">
+		<ul>
+		<li>The game is played in rounds</li>
+		<li>Each round 1 person is the Critic, the rest are the Artists</li>
+		<li>First person to 3 points wins</li>
+		</ul>
+	</div>
+</div>
+<div id="win" style="display:none"class="wrap">
+	<h1 class="title">Game Over!</h1>
+	<h2 class="title" id="winmessage"></h2>
+</div>
+</body>
 </html>
